@@ -6,19 +6,19 @@
 
 #define MAX_LEN 100
 
-
 char lowercase[] = "abcdefghijklmnopqrstuvwxyz";
 char uppercase[] = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 char digits[]    = "0123456789";
 char symbols[]   = "!@#$%^&*()_+-={}[]<>?/|";
 
-void appendSet(char *dest, const char *src) {
-    while (*src != '\0') {
-        *dest = *src;
-        dest++;
-        src++;
+void appendSet(char *dest, const char *src, int max_len) {
+    int current_len = strlen(dest);
+    int src_len = strlen(src);
+    if (current_len + src_len >= max_len) {
+        printf("Warning: Character set buffer full. Truncating additional sets.\n");
+        return;
     }
-    *dest = '\0';
+    strcat(dest, src);
 }
 
 void generatePassword(char *password, int length, const char *charSet) {
@@ -29,8 +29,7 @@ void generatePassword(char *password, int length, const char *charSet) {
     password[length] = '\0';
 }
 
-
-void getUserChoice(char *charSet) {
+void getUserChoice(char *charSet, int max_len) {
     char choice[10];
 
     printf("Character types to include:\n");
@@ -39,23 +38,39 @@ void getUserChoice(char *charSet) {
     printf("3 - Numbers\n");
     printf("4 - Symbols\n");
     printf("Enter choices (e.g., 1234 for all): ");
-    scanf("%s", choice);
+    
+    if (scanf("%9s", choice) != 1) {
+        return;
+    }
 
-    *charSet = '\0';
+    charSet[0] = '\0';
+    int chosen[5] = {0}; // prevent duplicates
 
     for (int i = 0; i < strlen(choice); i++) {
         switch (choice[i]) {
             case '1':
-                appendSet(charSet + strlen(charSet), lowercase);
+                if (!chosen[1]) {
+                    appendSet(charSet, lowercase, max_len);
+                    chosen[1] = 1;
+                }
                 break;
             case '2':
-                appendSet(charSet + strlen(charSet), uppercase);
+                if (!chosen[2]) {
+                    appendSet(charSet, uppercase, max_len);
+                    chosen[2] = 1;
+                }
                 break;
             case '3':
-                appendSet(charSet + strlen(charSet), digits);
+                if (!chosen[3]) {
+                    appendSet(charSet, digits, max_len);
+                    chosen[3] = 1;
+                }
                 break;
             case '4':
-                appendSet(charSet + strlen(charSet), symbols);
+                if (!chosen[4]) {
+                    appendSet(charSet, symbols, max_len);
+                    chosen[4] = 1;
+                }
                 break;
             default:
                 printf("Invalid option '%c' ignored.\n", choice[i]);
@@ -63,7 +78,6 @@ void getUserChoice(char *charSet) {
         }
     }
 }
-
 
 void checkPasswordStrength(const char *password) {
     int len = strlen(password);
@@ -98,7 +112,7 @@ void checkPasswordStrength(const char *password) {
 
 int main() {
     char password[MAX_LEN];
-    char charSet[200];
+    char charSet[200] = "";
     int length;
 
     srand(time(NULL));
@@ -107,7 +121,7 @@ int main() {
     printf("    Random Password Generator \n");
     printf("====================================\n");
 
-    getUserChoice(charSet);
+    getUserChoice(charSet, sizeof(charSet));
 
     if (strlen(charSet) == 0) {
         printf("No valid character sets selected. Exiting...\n");
@@ -115,7 +129,10 @@ int main() {
     }
 
     printf("Enter password length (max %d): ", MAX_LEN - 1);
-    scanf("%d", &length);
+    if (scanf("%d", &length) != 1) {
+        printf("Invalid input. Exiting...\n");
+        return 1;
+    }
 
     if (length <= 0 || length >= MAX_LEN) {
         printf("Invalid length. Try again.\n");
@@ -129,5 +146,5 @@ int main() {
 
     printf("\nDone. Use it wisely and stay secure.\n");
 
- return 0;
+    return 0;
 }
